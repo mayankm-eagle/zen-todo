@@ -23,5 +23,7 @@ export const storage = {
   },
 };
 
-export const TOKEN_KEY = "zen.token";
+export const DEMO_KEY = "zen.demo";
+/** Older builds kept a Todoist token in the browser; remove it if found. */
+export const LEGACY_TOKEN_KEY = "zen.token";
 export const CACHE_KEY = "zen.cache";

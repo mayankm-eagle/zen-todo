@@ -1,25 +1,45 @@
-import { useState } from "react";
-import { storage, TOKEN_KEY, CACHE_KEY } from "../lib/storage";
+import { useEffect, useState } from "react";
+import { checkSession, logout, type SessionState } from "../todoist/api";
+import { storage, CACHE_KEY, DEMO_KEY, LEGACY_TOKEN_KEY } from "../lib/storage";
 import { App } from "./App";
 import { Connect } from "./Connect";
 
 export function Root() {
-  const [token, setToken] = useState<string | null>(() => storage.get(TOKEN_KEY));
+  const [demo, setDemo] = useState(() => storage.get(DEMO_KEY) === "1");
+  const [session, setSession] = useState<SessionState | "checking">("checking");
   const [notice, setNotice] = useState<string>();
 
-  const connect = (t: string) => {
-    storage.set(TOKEN_KEY, t);
+  useEffect(() => {
+    storage.remove(LEGACY_TOKEN_KEY);
+    if (!demo) void checkSession().then(setSession);
+  }, [demo]);
+
+  const signOut = async (why?: string) => {
     storage.remove(CACHE_KEY);
-    setNotice(undefined);
-    setToken(t);
-  };
-  const signOut = (why?: string) => {
-    storage.remove(TOKEN_KEY);
-    storage.remove(CACHE_KEY);
+    if (demo) {
+      storage.remove(DEMO_KEY);
+      setDemo(false);
+    } else await logout();
     setNotice(why);
-    setToken(null);
+    setSession("out");
   };
 
-  if (!token) return <Connect onConnect={connect} notice={notice} />;
-  return <App key={token} token={token} onSignOut={signOut} />;
+  if (demo) return <App key="demo" demo onSignOut={signOut} />;
+  if (session === "checking") return null;
+  if (session === "in") return <App key="live" demo={false} onSignOut={signOut} />;
+  return (
+    <Connect
+      state={session}
+      notice={notice}
+      onSignedIn={() => {
+        storage.remove(CACHE_KEY);
+        setNotice(undefined);
+        setSession("in");
+      }}
+      onDemo={() => {
+        storage.set(DEMO_KEY, "1");
+        setDemo(true);
+      }}
+    />
+  );
 }

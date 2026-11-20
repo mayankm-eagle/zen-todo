@@ -20,40 +20,54 @@ Todoist is the source of truth. Everything you do here writes straight back.
 
 ## How it works
 
-It is a static site with no backend. The browser talks to the
-[Todoist API v1](https://developer.todoist.com/api/v1/) directly.
+It is a static front end plus a small relay in `api/` that runs as Vercel functions.
 
-- Reads use the `/sync` endpoint: one full sync, then incremental syncs every 30 seconds and
-  whenever the tab regains focus.
-- Writes are `/sync` commands (`item_update`, `item_close`, `item_move`, …). They are
-  applied on screen immediately and confirmed by Todoist. If Todoist rejects one, the app
-  shows the error and resyncs from scratch.
-- Your API token is kept in this browser's `localStorage` and sent only to `api.todoist.com`.
-  The deployed site's Content-Security-Policy blocks requests to anywhere else.
+- **The token stays on the server.** `TODOIST_API_TOKEN` is an environment variable. The relay
+  adds it to requests going to the [Todoist API v1](https://developer.todoist.com/api/v1/). It
+  never reaches the browser.
+- **The site is password-protected.** The token gives full access to your Todoist, so the relay
+  answers only signed-in visitors. Sign in once per device with `APP_PASSWORD` and a session
+  cookie (HttpOnly, SameSite=Strict) keeps you signed in for a year. Changing `APP_PASSWORD`
+  signs out every device.
+- **Reads** use `/sync`: one full sync, then incremental syncs every 30 seconds and whenever the
+  tab regains focus.
+- **Writes** are `/sync` commands (`item_update`, `item_close`, `item_move`, …). They are
+  applied on screen immediately and confirmed by Todoist. If Todoist rejects one, the app shows
+  the error and resyncs from scratch.
 
-## Run it
+## Deploy on Vercel
+
+1. Import this repo as a Vercel project. `vercel.json` sets the build and security headers.
+2. Under **Settings → Environment Variables**, add:
+   - `TODOIST_API_TOKEN`: from Todoist → Settings → Integrations → Developer.
+   - `APP_PASSWORD`: any password you choose.
+3. Redeploy so the variables take effect.
+
+Until both are set, the site shows a setup page naming whichever is missing.
+
+## Run it locally
+
+Create `.env.local` (it's git-ignored):
+
+```
+TODOIST_API_TOKEN=your-token
+APP_PASSWORD=anything
+```
 
 ```bash
 npm install
+```
+
+```bash
 npm run dev
 ```
 
-Open the printed URL. Paste your token from Todoist → Settings → Integrations → Developer, or
-choose **Try with sample data**.
+The dev server serves the same `/api` routes. **Try with sample data** works without either
+variable.
 
 ```bash
 npm test
 ```
-
-```bash
-npm run build
-```
-
-## Deploy
-
-This is a plain Vite build, so any static host works. `vercel.json` sets up Vercel, including the
-security headers. Since the token lives in each visitor's own browser, sharing the URL never
-shares your Todoist.
 
 ## Credits
 

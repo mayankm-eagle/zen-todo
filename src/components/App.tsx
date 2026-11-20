@@ -29,12 +29,8 @@ const NAV: { route: Route; label: string; key: string }[] = [
   { route: { name: "projects" }, label: "Projects", key: "o" },
 ];
 
-export function App({ token, onSignOut }: { token: string; onSignOut: (why?: string) => void }) {
-  const demo = token === "demo";
-  const store = useMemo(
-    () => new Store(demo ? new DemoTransport() : new HttpTransport(token), demo ? null : CACHE_KEY),
-    [token, demo],
-  );
+export function App({ demo, onSignOut }: { demo: boolean; onSignOut: (why?: string) => void }) {
+  const store = useMemo(() => new Store(demo ? new DemoTransport() : new HttpTransport(), demo ? null : CACHE_KEY), [demo]);
   useEffect(() => {
     store.start();
     return () => store.stop();
@@ -49,7 +45,7 @@ export function App({ token, onSignOut }: { token: string; onSignOut: (why?: str
   const addRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (state.authFailed) onSignOut("Todoist didn't accept that token. Paste a fresh one.");
+    if (state.authFailed) onSignOut("Signed out. Enter the password again.");
   }, [state.authFailed, onSignOut]);
 
   useEffect(() => {
@@ -109,7 +105,7 @@ export function App({ token, onSignOut }: { token: string; onSignOut: (why?: str
           className="footer-link"
           onClick={() => {
             store.clearCache();
-            onSignOut();
+            void onSignOut();
           }}
         >
           {demo ? "Exit demo" : "Sign out"}

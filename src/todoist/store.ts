@@ -159,8 +159,8 @@ export class Store {
 
   private fail(err: unknown) {
     const status = err instanceof TodoistError ? err.status : 0;
-    if (status === 401 || status === 403) {
-      this.set({ syncing: false, authFailed: true, error: "Todoist didn't accept that token." });
+    if (status === 401) {
+      this.set({ syncing: false, authFailed: true });
       return;
     }
     const offline = typeof navigator !== "undefined" && navigator.onLine === false;
