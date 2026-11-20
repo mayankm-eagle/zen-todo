@@ -116,7 +116,7 @@ export function TaskRow({ task, ctx, children, dragProps, dragging }: RowProps) 
             ctx.store.complete(task.id);
           }}
         >
-          <svg viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true">
+          <svg viewBox="0 0 10 10" shapeRendering="crispEdges" aria-hidden="true">
             <path d="M2 5h1v1H2zM3 6h1v1H3zM4 7h1v1H4zM5 6h1v1H5zM6 5h1v1H6zM7 4h1v1H7zM8 3h1v1H8z" />
           </svg>
         </button>

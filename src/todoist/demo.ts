@@ -75,6 +75,7 @@ function seed() {
 
 export class DemoTransport implements Transport {
   private db = seed();
+  private log: Task[] = seedHistory();
   private version = 1;
   private changed = new Map<string, number>(); // item id → version
 
@@ -112,6 +113,7 @@ export class DemoTransport implements Transport {
       }
       case "item_close": {
         if (!t) return { error: "Item not found" };
+        this.log.unshift({ ...structuredClone(t), checked: true, completed_at: new Date().toISOString() });
         if (t.due?.is_recurring) {
           const step = /3 days/.test(t.due.string) ? 3 : /week/.test(t.due.string) ? 7 : 1;
           const [date, time] = t.due.date.split("T");
@@ -122,6 +124,8 @@ export class DemoTransport implements Transport {
         return "ok";
       }
       case "item_uncomplete": {
+        const i = this.log.findIndex((x) => x.id === a.id);
+        if (i >= 0) this.log.splice(i, 1);
         const x = this.db.items.find((i) => i.id === a.id);
         if (!x) return { error: "Item not found" };
         x.checked = false;
@@ -164,6 +168,13 @@ export class DemoTransport implements Transport {
     };
   }
 
+  async completed(since: Date, until: Date): Promise<Task[]> {
+    await new Promise((r) => setTimeout(r, 120));
+    const a = since.toISOString();
+    const b = until.toISOString();
+    return structuredClone(this.log.filter((t) => t.completed_at! >= a && t.completed_at! < b));
+  }
+
   async quickAdd(text: string): Promise<Task> {
     await new Promise((r) => setTimeout(r, 150));
     let content = ` ${text} `;
@@ -188,6 +199,36 @@ export class DemoTransport implements Transport {
     this.touch(t);
     return structuredClone(t);
   }
+}
+
+/** A believable last week of completions, so the Done tab has something to show. */
+function seedHistory(): Task[] {
+  const now = Date.now();
+  const at = (daysAgo: number, h: number, m: number) => {
+    const x = addDays(new Date(), -daysAgo);
+    x.setHours(h, m, 0, 0);
+    // Keep "today" entries in the past whatever time the demo is opened.
+    if (x.getTime() > now) return new Date(now - (h * 60 + m) * 1000).toISOString();
+    return x.toISOString();
+  };
+  const done = (content: string, daysAgo: number, h: number, m: number, p: Partial<Task> = {}) =>
+    task({ content, project_id: "work", checked: true, completed_at: at(daysAgo, h, m), ...p });
+  const items = [
+    done("Answer the vendor questionnaire", 0, 9, 12, { labels: ["shallow"], priority: 2 }),
+    done("Outline the launch narrative", 0, 8, 40, { priority: 4 }),
+    done("Confirm Thursday's offsite room", 1, 16, 55, { labels: ["shallow"] }),
+    done("Approve November expenses", 1, 16, 31, { labels: ["shallow"] }),
+    done("Write the Q1 hiring plan", 1, 11, 5, { priority: 3 }),
+    done("Prep for the board update", 1, 9, 30, { priority: 4 }),
+    done("Reply to Dana re: pricing", 2, 17, 10, { labels: ["shallow"], priority: 2 }),
+    done("Send the team the offsite agenda", 2, 15, 2, { labels: ["shallow"] }),
+    done("Draft onboarding checklist", 3, 14, 20, { priority: 3 }),
+    done("Book travel to Austin", 3, 12, 15, { labels: ["shallow"], project_id: "home" }),
+    done("Review Q4 metrics deck", 4, 10, 45, { priority: 4 }),
+    done("Schedule 1:1s for next week", 4, 9, 5, { labels: ["shallow"] }),
+  ];
+  // A demo task completed in the past isn't on the board.
+  return items;
 }
 
 const DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];

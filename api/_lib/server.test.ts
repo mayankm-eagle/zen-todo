@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { login, quick, session, sync } from "./server";
+import { completed, login, quick, session, sync } from "./server";
 
 const ORIGIN = "https://zen.example.com";
 const req = (path: string, init: RequestInit & { cookie?: string } = {}) =>
@@ -94,5 +94,15 @@ describe("relay", () => {
     const res = await sync(req("/api/sync", { method: "POST", headers: app, cookie, body: "" }));
     expect(res.status).toBe(502);
     expect(await res.text()).not.toContain("secret-token");
+  });
+
+  it("forwards only whitelisted params for completed tasks", async () => {
+    const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response('{"items":[],"next_cursor":null}'));
+    const { cookie } = await signIn();
+    const res = await completed(req("/api/completed?since=2026-11-01T00:00:00Z&until=2026-11-20T00:00:00Z&project_id=x&evil=1", { headers: app, cookie }));
+    expect(res.status).toBe(200);
+    const [url, init] = spy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://api.todoist.com/api/v1/tasks/completed/by_completion_date?since=2026-11-01T00%3A00%3A00Z&until=2026-11-20T00%3A00%3A00Z");
+    expect((init.headers as Record<string, string>).authorization).toBe("Bearer secret-token");
   });
 });

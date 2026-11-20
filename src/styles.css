@@ -84,9 +84,7 @@ body {
 
 #root {
   min-height: 100svh;
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 4rem 1.5rem 5rem;
+  padding: 1.5rem 2.5rem 3rem;
   display: flex;
   flex-direction: column;
 }
@@ -95,6 +93,17 @@ main {
   flex: 1;
   position: relative;
   z-index: 1;
+}
+
+/* The sign-in page keeps asker.dev's single narrow column. */
+.narrow {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding-top: 3.5rem;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100svh - 4.5rem);
 }
 
 /* ── type ─────────────────────────────────────────────────────────────── */
@@ -187,27 +196,14 @@ code {
   color: var(--late);
 }
 
-.crumb {
-  margin: -2.25rem 0 2.25rem;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.crumb a {
-  color: var(--muted-strong);
-  text-decoration-color: var(--underline-soft);
-}
-
 /* ── chrome (mono, uppercase) ─────────────────────────────────────────── */
 
-.nav,
 footer,
+.bar-links,
+.tabs button,
 .chrome-button,
 .chrome-link,
 .footer-link,
-.scope button,
 .segmented button,
 .field-label,
 .add-hint,
@@ -219,26 +215,14 @@ footer,
   text-transform: uppercase;
 }
 
-.nav {
-  display: flex;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-  margin-bottom: 3.5rem;
-  position: relative;
-  z-index: 1;
-}
 
-.nav a,
 footer a,
+.bar-links a,
 .chrome-link {
   color: var(--muted-strong);
   text-decoration-color: var(--underline-soft);
 }
 
-.nav a[aria-current="page"] {
-  color: var(--fg);
-  text-decoration-color: var(--fg);
-}
 
 footer {
   margin-top: 5rem;
@@ -308,7 +292,7 @@ button:disabled {
   .chrome-button:not(:disabled):hover,
   .chrome-link:hover,
   footer a:hover,
-  .nav a:hover {
+  .bar-links a:hover {
     color: var(--link-hover);
     text-decoration-color: var(--link-hover);
   }
@@ -446,6 +430,56 @@ section .add {
   font-size: 0.6875rem;
   color: var(--muted);
   pointer-events: none;
+}
+
+/* ── top bar: add on the left, chrome on the right ───────────────────── */
+
+.topbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem 2.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.75rem;
+}
+
+.topbar .add {
+  flex: 1 1 420px;
+  max-width: 720px;
+  margin: 0;
+}
+
+.loading {
+  flex: 1;
+  margin: 0;
+  color: var(--muted-strong);
+}
+
+.bar-links {
+  margin-left: auto;
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  align-items: baseline;
+  color: var(--muted);
+}
+
+.bar-links a {
+  color: var(--muted-strong);
+  text-decoration-color: var(--underline-soft);
+}
+
+.bar-links .status {
+  max-width: 28ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar-links .status.error {
+  color: var(--late);
+  white-space: normal;
 }
 
 /* ── tasks ────────────────────────────────────────────────────────────── */
@@ -662,15 +696,13 @@ section .add {
   gap: 1rem 1.5rem;
 }
 
-.segmented,
-.scope {
+.segmented {
   display: flex;
   gap: 1rem;
   padding: 0.25rem 0;
 }
 
-.segmented button,
-.scope button {
+.segmented button {
   color: var(--muted);
   text-decoration: underline;
   text-decoration-color: transparent;
@@ -680,87 +712,66 @@ section .add {
     text-decoration-color var(--duration) var(--ease);
 }
 
-.segmented button.on,
-.scope button.on {
+.segmented button.on {
   color: var(--fg);
   text-decoration-color: var(--fg);
 }
 
 @media (hover: hover) {
-  .segmented button:hover,
-  .scope button:hover {
+  .segmented button:hover {
     color: var(--fg);
   }
 }
 
-.scope {
-  margin: -1.5rem 0 2.5rem;
-  flex-wrap: wrap;
-  column-gap: 1.5rem;
+
+/* ── the board: priority matrix + right column ────────────────────────
+   Deep work sits in a 2×2 (important on top, urgent on the left); the
+   right column holds shallow work and the Done log. Everything grows with
+   its content: the page scrolls, the cells never do. */
+
+.board {
+  display: grid;
+  gap: 3rem;
 }
 
-/* ── projects list ────────────────────────────────────────────────────── */
-
-.projects li {
-  margin-bottom: 1.15rem;
-  color: var(--muted-strong);
-}
-
-.projects li:last-child {
-  margin-bottom: 0;
-}
-
-.projects a {
-  color: var(--fg);
-}
-
-/* ── priority board (drag and drop) ──────────────────────────────────── */
-
-.drop {
+.quadrant,
+.rail {
   position: relative;
-  margin-left: -0.75rem;
-  margin-right: -0.75rem;
-  padding: 0.75rem;
-  border: 1px dashed transparent;
-  transition:
-    border-color var(--duration) var(--ease),
-    background var(--duration) var(--ease);
+  margin: 0;
+  outline: 1px dashed transparent;
+  outline-offset: -1px;
+  transition: outline-color var(--duration) var(--ease);
 }
 
-.drop + .drop {
-  margin-top: -0.5rem;
+.quadrant {
+  padding: 0 0 2.5rem;
 }
 
-.drop h2 {
-  margin-bottom: 0.9rem;
-}
-
-.drop-armed {
-  border-color: var(--rule);
-}
-
-.drop-over {
-  border-color: var(--muted);
-  background: var(--wash);
-}
-
-.drop-over h2 {
-  color: var(--fg);
-}
-
-.drop-empty {
+.quadrant .empty {
   margin: 0;
   font-size: 0.9375rem;
 }
 
-.drop .task-line {
+.target-armed {
+  outline-color: var(--rule-strong);
+}
+
+.target-over {
+  outline-color: var(--muted);
+}
+
+.target-over h2 {
+  color: var(--fg);
+}
+
+.board .task-line {
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
 
-.drop .task-body {
+.board .task-body {
   cursor: inherit;
 }
 
@@ -780,96 +791,42 @@ section .add {
   max-width: 560px;
 }
 
-.more {
-  margin-top: 1rem;
-}
-
-/* On desktop the priority view becomes a 2×2 quadrant: P1 P2 / P3 P4.
-   Each cell scrolls on its own, so every target stays in reach while dragging. */
-@media (min-width: 1000px) {
-  html[data-view="priority"] #root {
-    max-width: 1160px;
-  }
-  .quadrants {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    margin-left: -1.25rem;
-  }
-  .quadrants .drop,
-  .quadrants .drop + .drop {
-    margin: 0;
-    border: 0;
-    height: clamp(260px, calc((100svh - 19rem) / 2), 560px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-    scrollbar-color: var(--rule-strong) transparent;
-    padding: 0 2rem 1.5rem 1.25rem;
-    transition:
-      background var(--duration) var(--ease),
-      outline-color var(--duration) var(--ease);
-    outline: 1px dashed transparent;
-    outline-offset: -1px;
-  }
-  .quadrants .drop:nth-child(odd) {
-    border-right: 1px solid var(--rule);
-  }
-  .quadrants .drop:nth-child(even) {
-    padding-left: 2.5rem;
-  }
-  .quadrants .drop:nth-child(-n + 2) {
-    border-bottom: 1px solid var(--rule);
-  }
-  .quadrants .drop:nth-child(n + 3) {
-    padding-top: 1.5rem;
-  }
-  .quadrants .drop h2 {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    margin: 0 0 0.9rem;
-    padding: 0.25rem 0 0.5rem;
-    background: var(--bg);
-  }
-  .quadrants .drop:nth-child(n + 3) h2 {
-    top: -1.5rem;
-    padding-top: 1.75rem;
-    margin-top: -1.5rem;
-  }
-  .quadrants .drop-over {
-    background: transparent;
-    outline-color: var(--muted);
-  }
-}
-
-/* ── deep / shallow ───────────────────────────────────────────────────
-   Deep work in the main column; shallow work piles up in a rail beside it
-   (below it on phones). */
-
-.work-main,
-.rail {
-  position: relative;
-  transition: outline-color var(--duration) var(--ease);
-  outline: 1px dashed transparent;
-  outline-offset: 0.75rem;
-}
-
-.zone-armed {
-  outline-color: var(--rule-strong);
-}
-
-.zone-over {
-  outline-color: var(--muted);
-}
+/* right column */
 
 .rail {
-  margin-top: 3rem;
   padding-top: 2rem;
   border-top: 1px solid var(--rule);
 }
 
-.rail h2 {
-  margin-bottom: 0.5rem;
+.tabs {
+  display: flex;
+  gap: 1.5rem;
+  margin: 0 0 0.75rem;
+}
+
+.tabs button {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+  transition:
+    color var(--duration) var(--ease),
+    text-decoration-color var(--duration) var(--ease);
+  display: inline-flex;
+  gap: 0.6em;
+}
+
+.tabs button.on {
+  color: var(--fg);
+  text-decoration-color: var(--fg);
+}
+
+@media (hover: hover) {
+  .tabs button:hover {
+    color: var(--fg);
+  }
 }
 
 .rail-note {
@@ -892,39 +849,103 @@ section .add {
   font-size: 0.9375rem;
 }
 
-.work-main .task-line,
-.rail .task-line {
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
+/* Done log */
+
+.history-day {
+  margin-bottom: 2rem;
 }
 
-@media (min-width: 1000px) {
-  html[data-rail] #root {
-    max-width: 1080px;
-  }
-  .work {
+.history-day h3 {
+  margin: 0 0 0.15rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-strong);
+  display: flex;
+  gap: 0.75em;
+}
+
+.history-split {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  font-size: 0.9375rem;
+}
+
+.history-list li {
+  display: grid;
+  grid-template-columns: 4.25rem 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.history-time {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.history-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.history-content {
+  color: var(--muted-strong);
+  overflow-wrap: anywhere;
+}
+
+.history-tags {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* tablet and up: the 2×2 */
+@media (min-width: 760px) {
+  .quadrants {
     display: grid;
-    grid-template-columns: minmax(0, 640px) minmax(240px, 1fr);
-    gap: 5rem;
+    grid-template-columns: 1fr 1fr;
+    margin-left: -1.25rem;
+  }
+  .quadrant {
+    padding: 1.5rem 2rem 2rem 1.25rem;
+  }
+  .quadrant:nth-child(odd) {
+    border-right: 1px solid var(--rule);
+  }
+  .quadrant:nth-child(even) {
+    padding-left: 2.5rem;
+  }
+  .quadrant:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--rule);
+    padding-top: 0.25rem;
+  }
+}
+
+/* desktop: the right column sits beside the matrix */
+@media (min-width: 1100px) {
+  .board {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+    gap: 3rem;
     align-items: start;
   }
   .rail {
-    position: sticky;
-    top: 2rem;
-    margin: 0;
-    padding: 0 0 0 2rem;
+    padding: 0 0 2rem 2.25rem;
     border-top: 0;
     border-left: 1px solid var(--rule);
-    max-height: calc(100svh - 4rem);
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--rule-strong) transparent;
-    outline-offset: -1px;
-  }
-  .rail h2 {
-    /* line the pile up with the page title */
-    margin-top: 0.35rem;
+    align-self: stretch;
   }
 }
 
@@ -1058,15 +1079,15 @@ section .add {
 
 @media (max-width: 600px) {
   #root {
-    padding: 2.5rem 1rem 4rem;
+    padding: 1.25rem 1rem 3rem;
   }
-  .nav {
-    gap: 0.9rem;
+  .narrow {
+    padding-top: 1.5rem;
+  }
+  .bar-links {
+    margin-left: 0;
+    gap: 1.1rem;
     font-size: 0.75rem;
-    margin-bottom: 2.5rem;
-  }
-  .lead {
-    margin-bottom: 2.5rem;
   }
   .editor-grid {
     grid-template-columns: 1fr;
@@ -1074,10 +1095,8 @@ section .add {
   .task.is-cursor > .task-line::before {
     display: none;
   }
-  .drop {
-    margin-left: -0.5rem;
-    margin-right: -0.5rem;
-    padding: 0.5rem;
+  .quadrant {
+    padding-bottom: 2rem;
   }
   footer {
     margin-top: 4rem;

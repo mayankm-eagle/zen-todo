@@ -7,20 +7,23 @@ Todoist is the source of truth. Everything you do here writes straight back.
 
 ## What it does
 
-- **Today, Upcoming, Inbox, Projects.** These read like Todoist, minus the clutter.
-- **Deep / shallow.** Deep work fills the main column. Shallow work (tasks labeled `@shallow` in
-  Todoist) collects in a column beside it, with a running tally like "6 · ~55 min" to batch
-  into one block. Drag a task across, or press `s`, and the label is written to Todoist.
-- **Priority.** An urgent/important matrix: P1 Do, P2 Schedule, P3 Delegate, P4 Triage. It's a
-  2×2 on desktop (important on top, urgent on the left) and a single column on phones. Drag a task to another group and the new priority
-  saves to Todoist on drop, with Undo. On a phone, long-press to drag. Scope it to
-  *Due today*, *Next 7 days* or *Everything*.
-- **Write back.** You can complete a task, edit its title, notes, due date (natural language,
-  e.g. "every mon 9am"), priority, project or labels, and delete it.
-- **Quick add.** Uses Todoist's own parser (`tomorrow 3pm #Work @deep p1`). A task added inside
-  a project or section lands there unless you type a `#project`.
-- **Keyboard.** `j`/`k` move, `x` completes, `e` edits, `1`–`4` set priority, `n` adds a task,
-  `s` toggles shallow/deep, `t u i p o` switch views, `r` syncs, `?` lists the keys.
+It's one screen.
+
+- **The matrix.** Deep work in a 2×2 urgent/important matrix: P1 Do, P2 Schedule,
+  P3 Delegate, P4 Triage (important on top, urgent on the left). Drag a task to another quadrant
+  and the new priority saves to Todoist. Quadrants grow with their tasks; the page scrolls.
+- **Shallow column.** On the right, tasks labeled `@shallow` in Todoist, with a running total
+  ("~55 min in all") to batch into one block. Drag a task into the column to mark it shallow.
+  Drag it into a quadrant to make it deep work at that priority.
+- **Done tab.** Next to Shallow, it lists what you checked off over the last 14 days, with
+  times. Each day is split into deep vs shallow work and P1–P2 count, so you can review where
+  the time went.
+- **Write back.** Check a task off (with undo), or click it to edit title, notes, due date
+  ("every mon 9am"), priority, project and labels. Every change saves to Todoist.
+- **Quick add.** Uses Todoist's parser: `Send the deck tomorrow p2 @shallow`.
+- **Keyboard.** `j`/`k` move, `x` completes, `e` edits, `1`–`4` move to P1–P4, `s` toggles
+  shallow/deep, `n` adds a task, `r` syncs, `?` lists the keys.
+- On phones everything stacks in one column.
 
 ## How it works
 

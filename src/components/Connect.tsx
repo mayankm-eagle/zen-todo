@@ -16,7 +16,7 @@ export function Connect({ state, notice, onSignedIn, onDemo }: Props) {
   const serverError = typeof state === "object" && "error" in state ? state.error : null;
 
   return (
-    <>
+    <div className="narrow">
       <main>
         <header>
           <h1>Zen</h1>
@@ -80,6 +80,6 @@ export function Connect({ state, notice, onSignedIn, onDemo }: Props) {
           Try with sample data
         </button>
       </footer>
-    </>
+    </div>
   );
 }

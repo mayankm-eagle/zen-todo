@@ -42,6 +42,20 @@ export class HttpTransport implements Transport {
     return this.request<SyncResponse>("/sync", { method: "POST", body });
   }
 
+  async completed(since: Date, until: Date): Promise<Task[]> {
+    const out: Task[] = [];
+    let cursor: string | null = null;
+    for (let page = 0; page < 10; page++) {
+      const q = new URLSearchParams({ since: since.toISOString(), until: until.toISOString(), limit: "200" });
+      if (cursor) q.set("cursor", cursor);
+      const res: { items: Task[]; next_cursor: string | null } = await this.request(`/completed?${q}`, { method: "GET" });
+      out.push(...res.items);
+      cursor = res.next_cursor;
+      if (!cursor) break;
+    }
+    return out;
+  }
+
   quickAdd(text: string): Promise<Task> {
     return this.request<Task>("/quick", {
       method: "POST",

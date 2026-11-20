@@ -41,10 +41,10 @@ export const AddTask = forwardRef<HTMLInputElement, Props>(function AddTask({ st
       />
       {focused && (
         <p className="add-hint">
+          <span>p1–p4 quadrant</span>
+          <span>@shallow</span>
           <span>tomorrow 3pm</span>
           <span>#project</span>
-          <span>@label</span>
-          <span>p1</span>
           <span>↵ add</span>
         </p>
       )}

@@ -105,6 +105,8 @@ export interface Transport {
   sync(req: SyncRequest): Promise<SyncResponse>;
   /** Todoist Quick Add: natural-language parsing of dates, #project, @label, p1..p4. */
   quickAdd(text: string): Promise<Task>;
+  /** Tasks completed in [since, until), newest first. */
+  completed(since: Date, until: Date): Promise<Task[]>;
 }
 
 /** Display priority ("P1".."P4") from API priority. */

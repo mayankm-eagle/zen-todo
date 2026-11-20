@@ -5,6 +5,7 @@ import type { Command, Priority, SyncResponse, Task, Transport } from "./types";
 const RESOURCES = ["items", "projects", "sections", "labels", "user"];
 const POLL_MS = 30_000;
 const DONE_LINGER_MS = 2_600;
+export const HISTORY_DAYS = 14;
 
 export interface Toast {
   id: number;
@@ -21,6 +22,9 @@ export interface State extends Data {
   /** Snapshots of tasks completed a moment ago, kept on screen (struck through). */
   done: Record<string, Task>;
   toast?: Toast;
+  /** Recently completed tasks (newest first), for the Done tab. Loaded on demand. */
+  history?: Task[];
+  historyError?: string;
 }
 
 export interface TaskEdit {
@@ -216,6 +220,7 @@ export class Store {
     this.patchItem(id, { checked: true });
     this.send([{ type: "item_close", uuid: uuid(), args: { id } }]);
     this.showToast(task.due?.is_recurring ? "Done. Next one scheduled." : "Done.", () => this.undoComplete(task));
+    this.refreshHistorySoon();
     this.later(() => {
       if (!this.state.done[id]) return; // undone in the meantime
       const { [id]: _snap, ...done } = this.state.done;
@@ -247,6 +252,7 @@ export class Store {
     } else {
       this.send([{ type: "item_uncomplete", uuid: uuid(), args: { id } }]);
     }
+    this.refreshHistorySoon();
   }
 
   update(id: string, edit: TaskEdit) {
@@ -281,6 +287,32 @@ export class Store {
     const before = task.priority;
     this.update(id, { priority });
     this.showToast(`Moved to P${5 - priority}.`, () => this.update(id, { priority: before }));
+  }
+
+  /**
+   * Put a task in a quadrant and/or the shallow column: one Todoist update,
+   * one undo. Used by drag and drop.
+   */
+  place(id: string, to: { priority?: Priority; shallow?: boolean }) {
+    const task = this.state.items[id];
+    if (!task) return;
+    const has = task.labels.some((l) => l.toLowerCase() === "shallow");
+    const edit: TaskEdit = {};
+    const before: TaskEdit = {};
+    const said: string[] = [];
+    if (to.priority !== undefined && to.priority !== task.priority) {
+      edit.priority = to.priority;
+      before.priority = task.priority;
+      said.push(`P${5 - to.priority}`);
+    }
+    if (to.shallow !== undefined && to.shallow !== has) {
+      edit.labels = to.shallow ? [...task.labels, "shallow"] : task.labels.filter((l) => l.toLowerCase() !== "shallow");
+      before.labels = task.labels;
+      said.unshift(to.shallow ? "shallow work" : "deep work");
+    }
+    if (!said.length) return;
+    this.update(id, edit);
+    this.showToast(`Moved to ${said.join(", ")}.`, () => this.update(id, before));
   }
 
   /** Mark a task as shallow work (adds the label) or deep work (removes it). */
@@ -377,6 +409,33 @@ export class Store {
         fix.push({ type: "item_update", uuid: uuid(), args: { id: task.id, due: { string: "today" } } });
       await this.roundTrip(false, fix);
     });
+  }
+
+  // ── history (Done tab) ────────────────────────────────────────────────
+  private historyWanted = false;
+  private historyTimer = 0;
+
+  /** Load what was completed in the last `days` days. Keeps refreshing after completions once asked for. */
+  async loadHistory(days = HISTORY_DAYS): Promise<void> {
+    this.historyWanted = true;
+    const until = new Date(Date.now() + 60_000);
+    const since = new Date(until);
+    since.setDate(since.getDate() - days);
+    since.setHours(0, 0, 0, 0);
+    try {
+      const items = await this.transport.completed(since, until);
+      items.sort((a, b) => (b.completed_at ?? "").localeCompare(a.completed_at ?? ""));
+      this.set({ history: items, historyError: undefined });
+    } catch (err) {
+      this.set({ historyError: (err as Error)?.message ?? "Couldn't load history" });
+    }
+  }
+
+  private refreshHistorySoon() {
+    if (!this.historyWanted) return;
+    clearTimeout(this.historyTimer);
+    // Give Todoist a moment to record the completion first.
+    this.historyTimer = window.setTimeout(() => void this.loadHistory(), 2500);
   }
 
   // ── cache ─────────────────────────────────────────────────────────────────

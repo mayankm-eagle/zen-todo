@@ -141,3 +141,32 @@ describe("shallow work", () => {
     expect(added?.labels).toContain("shallow");
   });
 });
+
+describe("history", () => {
+  it("loads completions newest first and refreshes after checking something off", async () => {
+    const { store } = await ready();
+    const p = store.loadHistory();
+    await vi.advanceTimersByTimeAsync(200);
+    await p;
+    const before = store.getState().history!;
+    expect(before.length).toBeGreaterThan(3);
+    expect(before[0].completed_at! >= before[1].completed_at!).toBe(true);
+    const task = Object.values(store.getState().items).find((t) => !t.due?.is_recurring)!;
+    store.complete(task.id);
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(store.getState().history![0].id).toBe(task.id);
+  });
+});
+
+describe("place", () => {
+  it("moves a shallow task into a quadrant with one update", async () => {
+    const { store, calls } = await ready();
+    const task = Object.values(store.getState().items).find((t) => t.labels.includes("shallow") && t.priority !== 4)!;
+    store.place(task.id, { priority: 4, shallow: false });
+    await settle();
+    const updates = calls.flatMap((c) => c.commands ?? []).filter((c) => c.type === "item_update");
+    expect(updates).toHaveLength(1);
+    expect(updates[0].args).toEqual({ id: task.id, priority: 4, labels: task.labels.filter((l) => l !== "shallow") });
+    expect(store.getState().toast?.message).toBe("Moved to deep work, P1.");
+  });
+});

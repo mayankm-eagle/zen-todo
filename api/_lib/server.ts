@@ -96,6 +96,26 @@ async function relay(req: Request, path: string, contentType: string): Promise<R
   });
 }
 
+/** Completed tasks in a date range, for the Done tab. Only whitelisted query params pass through. */
+export async function completed(req: Request): Promise<Response> {
+  const bad = misconfigured();
+  if (bad) return bad;
+  if (req.method !== "GET" || !fromApp(req)) return json({ error: "Bad request" }, 400);
+  if (!authed(req)) return json({ error: "Sign in" }, 401);
+  const inUrl = new URL(req.url).searchParams;
+  const out = new URLSearchParams();
+  for (const k of ["since", "until", "cursor", "limit"]) {
+    const v = inUrl.get(k);
+    if (v) out.set(k, v);
+  }
+  const upstream = await fetch(`${TODOIST}/tasks/completed/by_completion_date?${out}`, {
+    headers: { authorization: `Bearer ${env("TODOIST_API_TOKEN")}` },
+  });
+  const status = upstream.status === 401 || upstream.status === 403 ? 502 : upstream.status;
+  const body = status === 502 ? JSON.stringify({ error: "Todoist rejected TODOIST_API_TOKEN." }) : await upstream.text();
+  return new Response(body, { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
+}
+
 export const sync = (req: Request) => relay(req, "/sync", "application/x-www-form-urlencoded");
 export const quick = (req: Request) => relay(req, "/tasks/quick", "application/json");
 
@@ -105,4 +125,5 @@ export const routes: Record<string, (req: Request) => Promise<Response>> = {
   "/api/logout": logout,
   "/api/sync": sync,
   "/api/quick": quick,
+  "/api/completed": completed,
 };
