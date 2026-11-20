@@ -61,6 +61,7 @@ export function PriorityView({ state, ctx, scope }: { state: State; ctx: RowCont
 
   return (
     <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onStart} onDragEnd={onEnd} onDragCancel={() => setActive(null)}>
+      <div className="quadrants">
       {LEVELS.map(({ p, title }) => {
         const tasks = groups[p];
         const open = tasks.filter((t) => !t.checked).length;
@@ -84,6 +85,7 @@ export function PriorityView({ state, ctx, scope }: { state: State; ctx: RowCont
           </DropGroup>
         );
       })}
+      </div>
       <DragOverlay dropAnimation={{ duration: 160, easing: "ease-out" }}>
         {active ? (
           <div className={`drag-ghost p${5 - active.priority}`}>

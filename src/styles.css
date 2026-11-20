@@ -774,6 +774,64 @@ section .add {
   margin-top: 1rem;
 }
 
+/* On desktop the priority view becomes a 2×2 quadrant: P1 P2 / P3 P4.
+   Each cell scrolls on its own, so every target stays in reach while dragging. */
+@media (min-width: 1000px) {
+  html[data-view="priority"] #root {
+    max-width: 1160px;
+  }
+  .quadrants {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin-left: -1.25rem;
+  }
+  .quadrants .drop,
+  .quadrants .drop + .drop {
+    margin: 0;
+    border: 0;
+    height: clamp(260px, calc((100svh - 19rem) / 2), 560px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--rule-strong) transparent;
+    padding: 0 2rem 1.5rem 1.25rem;
+    transition:
+      background var(--duration) var(--ease),
+      outline-color var(--duration) var(--ease);
+    outline: 1px dashed transparent;
+    outline-offset: -1px;
+  }
+  .quadrants .drop:nth-child(odd) {
+    border-right: 1px solid var(--rule);
+  }
+  .quadrants .drop:nth-child(even) {
+    padding-left: 2.5rem;
+  }
+  .quadrants .drop:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--rule);
+  }
+  .quadrants .drop:nth-child(n + 3) {
+    padding-top: 1.5rem;
+  }
+  .quadrants .drop h2 {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0 0 0.9rem;
+    padding: 0.25rem 0 0.5rem;
+    background: var(--bg);
+  }
+  .quadrants .drop:nth-child(n + 3) h2 {
+    top: -1.5rem;
+    padding-top: 1.75rem;
+    margin-top: -1.5rem;
+  }
+  .quadrants .drop-over {
+    background: transparent;
+    outline-color: var(--muted);
+  }
+}
+
 /* ── toast & keys ─────────────────────────────────────────────────────── */
 
 .toast {

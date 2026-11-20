@@ -8,7 +8,7 @@ Todoist is the source of truth. Everything you do here writes straight back.
 ## What it does
 
 - **Today, Upcoming, Inbox, Projects.** These read like Todoist, minus the clutter.
-- **Priority.** Tasks are grouped P1–P4. Drag a task to another group and the new priority
+- **Priority.** Tasks are grouped P1–P4: a 2×2 quadrant on desktop (P1 P2 / P3 P4), a single column on phones. Drag a task to another group and the new priority
   saves to Todoist on drop, with Undo. On a phone, long-press to drag. Scope it to
   *Due today*, *Next 7 days* or *Everything*.
 - **Write back.** You can complete a task, edit its title, notes, due date (natural language,

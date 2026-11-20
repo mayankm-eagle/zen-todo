@@ -53,6 +53,10 @@ export function App({ token, onSignOut }: { token: string; onSignOut: (why?: str
   }, [state.authFailed, onSignOut]);
 
   useEffect(() => {
+    document.documentElement.dataset.view = route.name; // lets CSS widen the page for the quadrant
+  }, [route.name]);
+
+  useEffect(() => {
     setEditing(null);
     setCursor(null);
     window.scrollTo(0, 0);
