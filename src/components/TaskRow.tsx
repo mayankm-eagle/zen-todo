@@ -1,7 +1,8 @@
+import { useDraggable } from "@dnd-kit/core";
 import type { HTMLAttributes, ReactNode } from "react";
 import { dueLabel, isOverdue } from "../lib/dates";
 import { Inline } from "../lib/inline";
-import type { Node } from "../todoist/select";
+import { isShallow, SHALLOW, type Node } from "../todoist/select";
 import type { Store } from "../todoist/store";
 import { displayPriority, type Project, type Task } from "../todoist/types";
 import { TaskEditor } from "./TaskEditor";
@@ -19,18 +20,56 @@ export interface RowContext {
   hideDate?: "today" | "all";
   /** Hide the P1–P3 tag when the group heading already says it. */
   hidePriority?: boolean;
+  /** Show a SHALLOW tag on shallow tasks (where they share a list with deep ones). */
+  markShallow?: boolean;
+  /** Rows can be dragged (needs a surrounding DndContext). */
+  draggable?: boolean;
 }
 
 export function TaskList({ nodes, ctx, depth = 0 }: { nodes: Node[]; ctx: RowContext; depth?: number }) {
   if (!nodes.length) return null;
   return (
     <ul className={depth ? "tasks sub" : "tasks"}>
-      {nodes.map((n) => (
-        <TaskRow key={n.task.id} task={n.task} ctx={ctx}>
-          <TaskList nodes={n.children} ctx={ctx} depth={depth + 1} />
-        </TaskRow>
-      ))}
+      {nodes.map((n) => {
+        const kids = <TaskList nodes={n.children} ctx={ctx} depth={depth + 1} />;
+        return ctx.draggable ? (
+          <DraggableRow key={n.task.id} task={n.task} ctx={ctx}>
+            {kids}
+          </DraggableRow>
+        ) : (
+          <TaskRow key={n.task.id} task={n.task} ctx={ctx}>
+            {kids}
+          </TaskRow>
+        );
+      })}
     </ul>
+  );
+}
+
+export function DraggableRow({ task, ctx, children }: { task: Task; ctx: RowContext; children?: ReactNode }) {
+  const disabled = task.checked || task.id.startsWith("tmp-") || ctx.editing === task.id;
+  const { setNodeRef, listeners, attributes, isDragging } = useDraggable({ id: task.id, disabled, data: { task } });
+  return (
+    <TaskRow
+      task={task}
+      ctx={ctx}
+      dragging={isDragging}
+      dragProps={{ ref: setNodeRef, ...listeners, ...attributes, role: undefined, tabIndex: undefined }}
+    >
+      {children}
+    </TaskRow>
+  );
+}
+
+/** The floating copy of a task that follows the pointer while dragging. */
+export function DragGhost({ task }: { task: Task }) {
+  return (
+    <div className={`drag-ghost p${displayPriority(task.priority)}`}>
+      <span className="check" aria-hidden="true" />
+      <span>
+        <Inline text={task.content} />
+      </span>
+    </div>
   );
 }
 
@@ -130,7 +169,8 @@ function Meta({ task, ctx }: { task: Task; ctx: RowContext }) {
     const proj = ctx.projects[task.project_id];
     if (proj && !proj.inbox_project) parts.push(<span key="proj">{proj.name}</span>);
   }
-  for (const l of task.labels) parts.push(<span key={`l-${l}`}>@{l}</span>);
+  for (const l of task.labels) if (l.toLowerCase() !== SHALLOW) parts.push(<span key={`l-${l}`}>@{l}</span>);
+  if (ctx.markShallow && isShallow(task)) parts.push(<span key="shallow" className="prio">Shallow</span>);
   if (task.description) parts.push(<span key="desc" className="has-notes" title="Has notes">≡</span>);
   if (p < 4 && !ctx.hidePriority) parts.unshift(<span key="p" className="prio">P{p}</span>);
   if (!parts.length) return null;

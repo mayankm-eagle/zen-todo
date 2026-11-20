@@ -132,6 +132,16 @@ h2 {
   opacity: 0.7;
 }
 
+.h2-hint {
+  margin-left: auto;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  color: var(--muted);
+  opacity: 0.8;
+}
+
 ul {
   list-style: none;
   margin: 0;
@@ -829,6 +839,92 @@ section .add {
   .quadrants .drop-over {
     background: transparent;
     outline-color: var(--muted);
+  }
+}
+
+/* ── deep / shallow ───────────────────────────────────────────────────
+   Deep work in the main column; shallow work piles up in a rail beside it
+   (below it on phones). */
+
+.work-main,
+.rail {
+  position: relative;
+  transition: outline-color var(--duration) var(--ease);
+  outline: 1px dashed transparent;
+  outline-offset: 0.75rem;
+}
+
+.zone-armed {
+  outline-color: var(--rule-strong);
+}
+
+.zone-over {
+  outline-color: var(--muted);
+}
+
+.rail {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--rule);
+}
+
+.rail h2 {
+  margin-bottom: 0.5rem;
+}
+
+.rail-note {
+  margin: 0 0 1.5rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.rail .tasks {
+  gap: 0.7rem;
+  font-size: 0.9375rem;
+}
+
+.rail .task-meta {
+  font-size: 0.8125rem;
+}
+
+.rail .add {
+  margin: 1.25rem 0 0;
+  font-size: 0.9375rem;
+}
+
+.work-main .task-line,
+.rail .task-line {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+@media (min-width: 1000px) {
+  html[data-rail] #root {
+    max-width: 1080px;
+  }
+  .work {
+    display: grid;
+    grid-template-columns: minmax(0, 640px) minmax(240px, 1fr);
+    gap: 5rem;
+    align-items: start;
+  }
+  .rail {
+    position: sticky;
+    top: 2rem;
+    margin: 0;
+    padding: 0 0 0 2rem;
+    border-top: 0;
+    border-left: 1px solid var(--rule);
+    max-height: calc(100svh - 4rem);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--rule-strong) transparent;
+    outline-offset: -1px;
+  }
+  .rail h2 {
+    /* line the pile up with the page title */
+    margin-top: 0.35rem;
   }
 }
 

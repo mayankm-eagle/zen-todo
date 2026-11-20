@@ -47,6 +47,7 @@ function seed() {
   const labels: Label[] = [
     { id: "l1", name: "errand" },
     { id: "l2", name: "deep" },
+    { id: "l3", name: "shallow" },
   ];
   const draft = task({ content: "Draft the launch post", project_id: "launch", priority: 4, due: due(d(0, "10:00"), "today at 10am"), labels: ["deep"], description: "Lead with the why. Keep it under 600 words." });
   const items: Task[] = [
@@ -54,12 +55,14 @@ function seed() {
     task({ content: "Outline", project_id: "launch", parent_id: draft.id }),
     task({ content: "Pick a hero image", project_id: "launch", parent_id: draft.id }),
     task({ content: "Renew passport", project_id: "home", section_id: "s-errands", priority: 3, due: due(d(-3), d(-3)), labels: ["errand"] }),
-    task({ content: "Reply to Sam about the offsite", project_id: "work", section_id: "s-week", priority: 2, due: due(d(0), "today") }),
+    task({ content: "Reply to Sam about the offsite", project_id: "work", section_id: "s-week", priority: 2, due: due(d(0), "today"), labels: ["shallow"] }),
     task({ content: "Review **Q4 plan** with the team", project_id: "work", section_id: "s-week", priority: 3, due: due(d(0, "15:30"), "today at 3:30pm") }),
     task({ content: "Water the plants", project_id: "home", due: due(d(0), "every 3 days", true) }),
-    task({ content: "Book flights for December", project_id: "home", priority: 2, due: due(d(1), "tomorrow") }),
+    task({ content: "Book flights for December", project_id: "home", priority: 2, due: due(d(1), "tomorrow"), labels: ["shallow"] }),
+    task({ content: "Expense the conference tickets", project_id: "work", labels: ["shallow"], duration: { amount: 15, unit: "minute" } }),
+    task({ content: "Send Priya the hiring rubric", project_id: "work", priority: 2, labels: ["shallow"] }),
     task({ content: "1:1 prep", project_id: "work", section_id: "s-week", due: due(d(2, "09:00"), "every week at 9am", true) }),
-    task({ content: "Grocery run", project_id: "home", section_id: "s-errands", due: due(d(3), d(3)), labels: ["errand"] }),
+    task({ content: "Grocery run", project_id: "home", section_id: "s-errands", due: due(d(3), d(3)), labels: ["errand", "shallow"] }),
     task({ content: "Write up the architecture decision", project_id: "work", section_id: "s-later", priority: 2, due: due(d(5), d(5)), labels: ["deep"] }),
     task({ content: "Clean out the garage", project_id: "home" }),
     task({ content: "Read [The Grain of Thought](https://asker.dev/grain-of-thought)", project_id: "reading" }),

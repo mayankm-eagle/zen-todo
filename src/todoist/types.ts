@@ -34,6 +34,7 @@ export interface Task {
   is_deleted: boolean;
   added_at?: string;
   completed_at?: string | null;
+  duration?: { amount: number; unit: "minute" | "day" } | null;
 }
 
 export interface Project {

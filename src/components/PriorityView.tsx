@@ -5,7 +5,6 @@ import {
   TouchSensor,
   pointerWithin,
   rectIntersection,
-  useDraggable,
   useDroppable,
   useSensor,
   useSensors,
@@ -14,19 +13,20 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { useState } from "react";
-import { Inline } from "../lib/inline";
 import { count } from "../lib/words";
 import { priorityGroups, type PriorityScope } from "../todoist/select";
 import type { State } from "../todoist/store";
 import type { Priority, Task } from "../todoist/types";
-import { TaskRow, type RowContext } from "./TaskRow";
+import { DraggableRow, DragGhost, type RowContext } from "./TaskRow";
 
 const CAP = 30;
-const LEVELS: { p: Priority; title: string }[] = [
-  { p: 4, title: "P1 · Urgent" },
-  { p: 3, title: "P2 · High" },
-  { p: 2, title: "P3 · Medium" },
-  { p: 1, title: "P4 · Someday" },
+// The urgent / important matrix, encoded as Todoist priority. On desktop the
+// 2×2 reads: important on top, urgent on the left.
+const LEVELS: { p: Priority; title: string; hint: string }[] = [
+  { p: 4, title: "P1 · Do", hint: "Urgent and important" },
+  { p: 3, title: "P2 · Schedule", hint: "Important, not urgent" },
+  { p: 2, title: "P3 · Delegate", hint: "Urgent, not important" },
+  { p: 1, title: "P4 · Triage", hint: "Not sorted yet" },
 ];
 
 // Mouse drags after 6px of movement; touch drags after a short press, so swipes still scroll.
@@ -62,12 +62,12 @@ export function PriorityView({ state, ctx, scope }: { state: State; ctx: RowCont
   return (
     <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onStart} onDragEnd={onEnd} onDragCancel={() => setActive(null)}>
       <div className="quadrants">
-      {LEVELS.map(({ p, title }) => {
+      {LEVELS.map(({ p, title, hint }) => {
         const tasks = groups[p];
         const open = tasks.filter((t) => !t.checked).length;
         const shown = expanded[p] ? tasks : tasks.slice(0, CAP);
         return (
-          <DropGroup key={p} priority={p} title={title} countLabel={open ? String(open) : ""} dragging={!!active} from={active?.priority}>
+          <DropGroup key={p} priority={p} title={title} hint={hint} countLabel={open ? String(open) : ""} dragging={!!active} from={active?.priority}>
             {tasks.length === 0 ? (
               <p className="empty drop-empty">{active ? "Drop here" : "Nothing here."}</p>
             ) : (
@@ -87,14 +87,7 @@ export function PriorityView({ state, ctx, scope }: { state: State; ctx: RowCont
       })}
       </div>
       <DragOverlay dropAnimation={{ duration: 160, easing: "ease-out" }}>
-        {active ? (
-          <div className={`drag-ghost p${5 - active.priority}`}>
-            <span className="check" aria-hidden="true" />
-            <span>
-              <Inline text={active.content} />
-            </span>
-          </div>
-        ) : null}
+        {active ? <DragGhost task={active} /> : null}
       </DragOverlay>
     </DndContext>
   );
@@ -103,6 +96,7 @@ export function PriorityView({ state, ctx, scope }: { state: State; ctx: RowCont
 function DropGroup(props: {
   priority: Priority;
   title: string;
+  hint: string;
   countLabel: string;
   dragging: boolean;
   from?: Priority;
@@ -114,24 +108,12 @@ function DropGroup(props: {
     .join(" ");
   return (
     <section ref={setNodeRef} className={cls} aria-label={props.title}>
-      <h2>
+      <h2 title={props.hint}>
         {props.title}
         {props.countLabel && <span className="h2-count">{props.countLabel}</span>}
+        <span className="h2-hint">{props.hint}</span>
       </h2>
       {props.children}
     </section>
-  );
-}
-
-function DraggableRow({ task, ctx }: { task: Task; ctx: RowContext }) {
-  const disabled = task.checked || task.id.startsWith("tmp-") || ctx.editing === task.id;
-  const { setNodeRef, listeners, attributes, isDragging } = useDraggable({ id: task.id, disabled });
-  return (
-    <TaskRow
-      task={task}
-      ctx={ctx}
-      dragging={isDragging}
-      dragProps={{ ref: setNodeRef, ...listeners, ...attributes, role: undefined, tabIndex: undefined }}
-    />
   );
 }

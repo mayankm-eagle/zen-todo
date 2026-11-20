@@ -15,6 +15,9 @@ import {
   type PriorityScope,
 } from "../todoist/select";
 import { Store, type State } from "../todoist/store";
+import { isShallow } from "../todoist/select";
+import type { Task } from "../todoist/types";
+import { WorkLayout } from "./WorkLayout";
 import { apiPriority } from "../todoist/types";
 import { AddTask } from "./AddTask";
 import { PriorityView } from "./PriorityView";
@@ -48,9 +51,15 @@ export function App({ demo, onSignOut }: { demo: boolean; onSignOut: (why?: stri
     if (state.authFailed) onSignOut("Signed out. Enter the password again.");
   }, [state.authFailed, onSignOut]);
 
+  const rail = route.name !== "priority";
   useEffect(() => {
-    document.documentElement.dataset.view = route.name; // lets CSS widen the page for the quadrant
-  }, [route.name]);
+    // Lets CSS widen the page for the quadrant and the shallow column.
+    document.documentElement.dataset.view = route.name;
+    document.documentElement.toggleAttribute("data-rail", rail);
+  }, [route.name, rail]);
+
+  // The main column shows deep work; shallow work lives in its own column.
+  const deep = useMemo(() => withoutShallow(state), [state]);
 
   useEffect(() => {
     setEditing(null);
@@ -60,9 +69,9 @@ export function App({ demo, onSignOut }: { demo: boolean; onSignOut: (why?: stri
 
   useKeyboard({ store, state, cursor, setCursor, editing, setEditing, addRef, setShowKeys });
 
-  const ctx: RowContext = { store, projects: state.projects, cursor, editing, setCursor, setEditing };
+  const ctx: RowContext = { store, projects: state.projects, cursor, editing, setCursor, setEditing, draggable: rail };
 
-  const view = renderView(route, state, ctx, addRef, scope, (s) => {
+  const view = renderView(route, rail ? deep : state, ctx, addRef, scope, (s) => {
     setScope(s);
     storage.set("zen.scope", s);
   });
@@ -81,11 +90,23 @@ export function App({ demo, onSignOut }: { demo: boolean; onSignOut: (why?: stri
         })}
       </nav>
       <main>
-        <header>
-          <h1>{view.title}</h1>
-        </header>
-        <p className="lead">{state.status === "loading" ? "Reading your Todoist…" : view.lead}</p>
-        {state.status === "ready" && view.body}
+        {rail && state.status === "ready" ? (
+          <WorkLayout state={state} ctx={ctx}>
+            <header>
+              <h1>{view.title}</h1>
+            </header>
+            <p className="lead">{view.lead}</p>
+            {view.body}
+          </WorkLayout>
+        ) : (
+          <>
+            <header>
+              <h1>{view.title}</h1>
+            </header>
+            <p className="lead">{state.status === "loading" ? "Reading your Todoist…" : view.lead}</p>
+            {state.status === "ready" && view.body}
+          </>
+        )}
       </main>
       <footer>
         <span className={state.error ? "status error" : "status"} title={state.error}>
@@ -124,6 +145,11 @@ export function App({ demo, onSignOut }: { demo: boolean; onSignOut: (why?: stri
       )}
     </>
   );
+}
+
+function withoutShallow(state: State): State {
+  const keep = (rec: Record<string, Task>) => Object.fromEntries(Object.entries(rec).filter(([, t]) => !isShallow(t)));
+  return { ...state, items: keep(state.items), done: keep(state.done) };
 }
 
 interface View {
@@ -211,7 +237,7 @@ function renderView(
     case "priority": {
       return {
         title: "Priority",
-        lead: "Drag a task to another priority. It saves to Todoist as you drop it.",
+        lead: "Do, schedule, delegate, triage. Drag a task to another quadrant; it saves to Todoist as you drop it.",
         body: (
           <>
             <div className="scope" role="radiogroup" aria-label="Which tasks">
@@ -221,7 +247,7 @@ function renderView(
                 </button>
               ))}
             </div>
-            <PriorityView state={state} ctx={{ ...ctx, hidePriority: true }} scope={scope} />
+            <PriorityView state={state} ctx={{ ...ctx, hidePriority: true, markShallow: true }} scope={scope} />
           </>
         ),
       };
@@ -294,9 +320,10 @@ function Keys({ onClose }: { onClose: () => void }) {
     ["x", "Complete"],
     ["e or ↵", "Edit"],
     ["1 – 4", "Set priority"],
+    ["s", "Toggle shallow / deep"],
     ["n", "Add a task"],
     ["t u i p o", "Today, Upcoming, Inbox, Priority, Projects"],
-    ["s", "Sync now"],
+    ["r", "Sync now"],
     ["esc", "Close"],
   ];
   return (
@@ -400,6 +427,13 @@ function useKeyboard(o: {
           }
           break;
         case "s":
+          if (cursor) {
+            e.preventDefault();
+            const t = ref.current.state.items[cursor];
+            if (t) store.setShallow(cursor, !isShallow(t));
+          }
+          break;
+        case "r":
           e.preventDefault();
           void store.sync();
           break;

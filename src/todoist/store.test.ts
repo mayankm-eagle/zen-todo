@@ -109,3 +109,35 @@ describe("Store", () => {
     expect(store.getState().toast?.message).toMatch(/Couldn't save/);
   });
 });
+
+describe("shallow work", () => {
+  it("drag to shallow adds the label in Todoist; undo removes it", async () => {
+    const { store, calls } = await ready();
+    const task = Object.values(store.getState().items).find((t) => !t.labels.includes("shallow"))!;
+    store.setShallow(task.id, true);
+    expect(store.getState().items[task.id].labels).toContain("shallow");
+    await settle();
+    const cmd = calls.flatMap((c) => c.commands ?? []).find((c) => c.type === "item_update");
+    expect(cmd?.args).toEqual({ id: task.id, labels: [...task.labels, "shallow"] });
+    store.getState().toast!.undo!();
+    await settle();
+    expect(store.getState().items[task.id].labels).toEqual(task.labels);
+  });
+
+  it("moving to deep keeps the task's other labels", async () => {
+    const { store } = await ready();
+    const task = Object.values(store.getState().items).find((t) => t.labels.includes("shallow") && t.labels.length > 1)!;
+    store.setShallow(task.id, false);
+    await settle();
+    expect(store.getState().items[task.id].labels).toEqual(task.labels.filter((l) => l !== "shallow"));
+  });
+
+  it("quick add from the pile tags the task shallow", async () => {
+    const { store } = await ready();
+    const done = store.add("Renew domain", { shallow: true });
+    await settle();
+    await done;
+    const added = Object.values(store.getState().items).find((t) => t.content === "Renew domain");
+    expect(added?.labels).toContain("shallow");
+  });
+});

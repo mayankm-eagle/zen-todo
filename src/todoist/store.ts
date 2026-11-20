@@ -36,6 +36,8 @@ export interface AddContext {
   projectId?: string;
   sectionId?: string;
   dueToday?: boolean;
+  /** Tag the new task as shallow work. */
+  shallow?: boolean;
 }
 
 type Listener = () => void;
@@ -281,6 +283,18 @@ export class Store {
     this.showToast(`Moved to P${5 - priority}.`, () => this.update(id, { priority: before }));
   }
 
+  /** Mark a task as shallow work (adds the label) or deep work (removes it). */
+  setShallow(id: string, shallow: boolean) {
+    const task = this.state.items[id];
+    if (!task) return;
+    const has = task.labels.some((l) => l.toLowerCase() === "shallow");
+    if (has === shallow) return;
+    const before = task.labels;
+    const labels = shallow ? [...before, "shallow"] : before.filter((l) => l.toLowerCase() !== "shallow");
+    this.update(id, { labels });
+    this.showToast(shallow ? "Moved to shallow work." : "Moved to deep work.", () => this.update(id, { labels: before }));
+  }
+
   move(id: string, to: { projectId?: string; sectionId?: string | null }) {
     const task = this.state.items[id];
     if (!task) return;
@@ -313,7 +327,8 @@ export class Store {
 
   /** Add via Todoist Quick Add, then nudge it into the view it was typed in. */
   add(text: string, ctx: AddContext = {}): Promise<void> {
-    const trimmed = text.trim();
+    let trimmed = text.trim();
+    if (trimmed && ctx.shallow && !/(^|\s)@shallow\b/i.test(trimmed)) trimmed += " @shallow";
     if (!trimmed) return Promise.resolve();
     const tempId = `tmp-${uuid()}`;
     const inbox = Object.values(this.state.projects).find((p) => p.inbox_project);
@@ -327,7 +342,7 @@ export class Store {
       description: "",
       priority: 1,
       due: ctx.dueToday ? { date: new Date().toISOString().slice(0, 10), string: "today", timezone: null, is_recurring: false } : null,
-      labels: [],
+      labels: ctx.shallow ? ["shallow"] : [],
       child_order: Number.MAX_SAFE_INTEGER,
       checked: false,
       is_deleted: false,

@@ -8,7 +8,11 @@ Todoist is the source of truth. Everything you do here writes straight back.
 ## What it does
 
 - **Today, Upcoming, Inbox, Projects.** These read like Todoist, minus the clutter.
-- **Priority.** Tasks are grouped P1–P4: a 2×2 quadrant on desktop (P1 P2 / P3 P4), a single column on phones. Drag a task to another group and the new priority
+- **Deep / shallow.** Deep work fills the main column. Shallow work (tasks labeled `@shallow` in
+  Todoist) collects in a column beside it, with a running tally like "6 · ~55 min" to batch
+  into one block. Drag a task across, or press `s`, and the label is written to Todoist.
+- **Priority.** An urgent/important matrix: P1 Do, P2 Schedule, P3 Delegate, P4 Triage. It's a
+  2×2 on desktop (important on top, urgent on the left) and a single column on phones. Drag a task to another group and the new priority
   saves to Todoist on drop, with Undo. On a phone, long-press to drag. Scope it to
   *Due today*, *Next 7 days* or *Everything*.
 - **Write back.** You can complete a task, edit its title, notes, due date (natural language,
@@ -16,7 +20,7 @@ Todoist is the source of truth. Everything you do here writes straight back.
 - **Quick add.** Uses Todoist's own parser (`tomorrow 3pm #Work @deep p1`). A task added inside
   a project or section lands there unless you type a `#project`.
 - **Keyboard.** `j`/`k` move, `x` completes, `e` edits, `1`–`4` set priority, `n` adds a task,
-  `t u i p o` switch views, `?` lists the keys.
+  `s` toggles shallow/deep, `t u i p o` switch views, `r` syncs, `?` lists the keys.
 
 ## How it works
 
@@ -68,6 +72,11 @@ variable.
 ```bash
 npm test
 ```
+
+## Agents
+
+`docs/agent-prompt.md` is the prompt for AI agents that add tasks to Todoist. It covers how they
+guess priority and depth (`@shallow`) so tasks land in the right place here.
 
 ## Credits
 
